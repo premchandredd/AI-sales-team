@@ -1,0 +1,14 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+websockets==14.1
+python-dotenv==1.0.1
+groq==0.15.0
+httpx==0.28.1
+pydantic==2.10.4
+python-multipart==0.0.18
+google-auth-oauthlib>=1.0.0
+google-api-python-client>=2.0.0
+supabase>=2.30.0
+twilio>=9.10.9
+pg8000>=1.31.5
+markitdown

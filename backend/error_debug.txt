@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\backend\main.py", line 182, in authenticate_google
+    user_info = google_service.exchange_code_for_tokens(req.code)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\backend\google_service.py", line 115, in exchange_code_for_tokens
+    flow.fetch_token(code=code)
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\.venv\Lib\site-packages\google_auth_oauthlib\flow.py", line 285, in fetch_token
+    return self.oauth2session.fetch_token(self.client_config["token_uri"], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\.venv\Lib\site-packages\requests_oauthlib\oauth2_session.py", line 406, in fetch_token
+    self._client.parse_request_body_response(r.text, scope=self.scope)
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\.venv\Lib\site-packages\oauthlib\oauth2\rfc6749\clients\base.py", line 426, in parse_request_body_response
+    self.token = parse_token_response(body, scope=scope)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\.venv\Lib\site-packages\oauthlib\oauth2\rfc6749\parameters.py", line 444, in parse_token_response
+    validate_token_parameters(params)
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\.venv\Lib\site-packages\oauthlib\oauth2\rfc6749\parameters.py", line 451, in validate_token_parameters
+    raise_from_error(params.get('error'), params)
+  File "C:\Users\manam\OneDrive\Desktop\voicekpm\.venv\Lib\site-packages\oauthlib\oauth2\rfc6749\errors.py", line 398, in raise_from_error
+    raise cls(**kwargs)
+oauthlib.oauth2.rfc6749.errors.InvalidGrantError: (invalid_grant) Bad Request

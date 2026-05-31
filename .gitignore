@@ -1,0 +1,42 @@
+# Python virtual environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+backend/__pycache__/
+backend/google_tokens.json
+
+# Node modules and build files
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Audio recordings and test outputs
+*.wav
+*.mp3
+output.wav
+input.wav
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.json.local
+
+# IDEs and system files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+scratch/
