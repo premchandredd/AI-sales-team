@@ -312,6 +312,31 @@ async def query_knowledge_base(agent_id: str, query: str, limit: int = 3) -> str
             top_chunks = [c[0] for c in scored_chunks[:limit] if c[1] > 0.0]
             print(f"[RAG] Keyword TF-IDF match complete. Matches found: {len(top_chunks)}")
 
+        # Substring/Word-Overlap Fallback if TF-IDF found nothing
+        if not top_chunks and chunks:
+            print("[RAG] TF-IDF found 0 matches. Running word-overlap fallback...")
+            query_words = [w.lower() for w in re.findall(r'\w+', query) if w.lower() not in {
+                "is", "the", "a", "an", "and", "or", "but", "to", "of", "for", "in", "on", "at", 
+                "by", "with", "about", "how", "what", "where", "who", "why", "which", "can", 
+                "could", "would", "should", "will", "shall", "do", "does", "did", "have", 
+                "has", "had", "be", "been", "being", "you", "me", "i", "we", "they", "he", "she"
+            }]
+            
+            if query_words:
+                overlap_scores = []
+                for chunk in chunks:
+                    content_lower = chunk["content"].lower()
+                    score = 0
+                    for word in query_words:
+                        if word in content_lower:
+                            score += 1
+                    overlap_scores.append((chunk["content"], score))
+                
+                # Sort by overlap score descending (must be > 0)
+                overlap_scores.sort(key=lambda x: x[1], reverse=True)
+                top_chunks = [c[0] for c in overlap_scores[:limit] if c[1] > 0]
+                print(f"[RAG] Word-overlap match complete. Matches found: {len(top_chunks)}")
+
         if not top_chunks:
             return "No relevant facts or information found in the knowledge base."
 

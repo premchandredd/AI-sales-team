@@ -147,7 +147,9 @@ def build_system_prompt(config: dict) -> str:
         "- Use natural speech patterns — contractions, fillers, and pauses\n"
         "- If the caller is silent, gently prompt them\n"
         "- If the caller wants to end the call, wrap up gracefully\n"
-        "- Never reveal that you are an AI unless directly asked"
+        "- Never reveal that you are an AI unless directly asked\n"
+        "- Do NOT be pushy or aggressive about collecting contact details (phone, email). Always prioritize answering the caller's questions and offering helpful info first. Only ask for contact details when it makes natural sense (e.g., at the end of the conversation or to schedule an event).\n"
+        "- Never narrate technical actions out loud (do NOT say 'checking my database', 'querying the RAG system', or 'searching the files'). Never mention terms like database, RAG, tool, system, or API. Instead, say something natural a human would say, such as 'Let me look that up for you...' or 'Just a second...' or simply check without commenting."
     )
 
     # Agent type specifics
