@@ -1491,16 +1491,18 @@ async def upload_document(
             f.write(await file.read())
             
         from rag_service import ingest_document
-        success = await ingest_document(
+        success, message = await ingest_document(
             agent_id=agent_id,
             user_id=user_id,
             file_path=temp_path,
             filename=file.filename
         )
         if success:
-            return {"success": True, "message": f"Successfully ingested {file.filename}"}
+            return {"success": True, "message": message}
         else:
-            raise Exception("Document ingestion failed.")
+            raise HTTPException(status_code=400, detail=message)
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[API RAG] Upload failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

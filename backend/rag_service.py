@@ -201,24 +201,21 @@ async def get_openai_embedding(text: str) -> Optional[List[float]]:
     return None
 
 
-async def ingest_document(agent_id: str, user_id: str, file_path: str, filename: str) -> bool:
+async def ingest_document(agent_id: str, user_id: str, file_path: str, filename: str) -> tuple[bool, str]:
     """Parse, chunk, embed, and store document in database."""
     if not supabase:
-        print("[RAG] Supabase connection missing, cannot ingest document.")
-        return False
+        return False, "Supabase connection is not configured."
 
     try:
         # 1. Extract plaintext
         full_text = parse_file(file_path, filename)
         if not full_text.strip():
-            print(f"[RAG] Document {filename} is empty.")
-            return False
+            return False, "No readable text could be extracted. If it is a PDF or PPTX, please verify it contains digital, selectable text and is not a scanned image."
 
         # 2. Chunk text
         chunks = chunk_text(full_text)
         if not chunks:
-            print(f"[RAG] Failed to extract chunks from {filename}.")
-            return False
+            return False, "Could not segment the extracted document text into chunks."
 
         # 3. Create Knowledge Base record
         kb_res = supabase.table("knowledge_bases").insert({
@@ -228,8 +225,7 @@ async def ingest_document(agent_id: str, user_id: str, file_path: str, filename:
         }).execute()
         
         if not kb_res.data:
-            print("[RAG] Failed to insert knowledge base record.")
-            return False
+            return False, "Failed to insert document metadata into database."
             
         kb_id = kb_res.data[0]["id"]
 
@@ -249,10 +245,10 @@ async def ingest_document(agent_id: str, user_id: str, file_path: str, filename:
             supabase.table("kb_chunks").insert(chunk_inserts[i:i+batch_size]).execute()
 
         print(f"[RAG] Successfully ingested {filename} ({len(chunks)} chunks) for agent {agent_id}.")
-        return True
+        return True, f"Successfully ingested {filename} ({len(chunks)} chunks)."
     except Exception as e:
         print(f"[RAG] Ingestion failed for {filename}: {e}")
-        return False
+        return False, str(e)
 
 
 def cosine_similarity(v1: List[float], v2: List[float]) -> float:
