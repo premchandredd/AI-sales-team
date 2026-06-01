@@ -12,3 +12,5 @@ supabase>=2.30.0
 twilio>=9.10.9
 pg8000>=1.31.5
 markitdown
+pypdf
+

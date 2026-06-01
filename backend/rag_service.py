@@ -161,14 +161,20 @@ def parse_file(file_path: str, filename: str) -> str:
             return ""
 
 
+_embedding_service_available = True
+
 async def get_openai_embedding(text: str) -> Optional[List[float]]:
     """Fetch semantic embedding vector from OpenAI API if available."""
+    global _embedding_service_available
+    if not _embedding_service_available:
+        return None
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         return None
         
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             res = await client.post(
                 "https://api.openai.com/v1/embeddings",
                 headers={
@@ -183,8 +189,15 @@ async def get_openai_embedding(text: str) -> Optional[List[float]]:
             if res.status_code == 200:
                 data = res.json()
                 return data["data"][0]["embedding"]
+            else:
+                print(f"[RAG] OpenAI Embedding API returned status {res.status_code}: {res.text}")
+                if res.status_code in (401, 403, 429):
+                    print("[RAG] Disabling OpenAI embeddings due to authorization/rate limits.")
+                    _embedding_service_available = False
     except Exception as e:
         print(f"[RAG] OpenAI Embedding error: {e}")
+        print("[RAG] Disabling OpenAI embeddings due to network/timeout issue.")
+        _embedding_service_available = False
     return None
 
 

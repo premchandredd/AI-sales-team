@@ -907,16 +907,52 @@ class VoiceSession:
                             summary = args.get("summary")
                             description = args.get("description", "")
                             
+                            google_meet_enabled = self.agent_config.get("google_meet_enabled", False)
+                            email_notifications_enabled = self.agent_config.get("email_notifications_enabled", False)
+                            
+                            # Resolve customer name & email from current lead details
+                            customer_email = None
+                            customer_name = None
+                            if self.lead_details:
+                                customer_email = self.lead_details.get("Email") or self.lead_details.get("email") or self.lead_details.get("email address") or self.lead_details.get("Email Address")
+                                if customer_email and str(customer_email).lower() in ["null", "none", ""]:
+                                    customer_email = None
+                                customer_name = self.lead_details.get("Name") or self.lead_details.get("name") or self.lead_details.get("customer_name")
+                                
                             res = await asyncio.to_thread(
                                 google_service.book_calendar_event,
                                 calendar_id=calendar_id,
                                 start_time_iso=start_time,
                                 end_time_iso=end_time,
                                 summary=summary,
-                                description=description
+                                description=description,
+                                create_meet=google_meet_enabled,
+                                attendee_email=customer_email
                             )
                             tool_result = {"status": "success", "event": res}
                             print(f"[TOOL] Calendar event booked: {res}")
+                            
+                            # Send Gmail notification if enabled and customer email is available
+                            if email_notifications_enabled and customer_email:
+                                print(f"[TOOL] Sending confirmation email to {customer_email}...")
+                                meet_link = res.get("meetLink")
+                                meet_text = f"\nGoogle Meet Link: {meet_link}\n" if meet_link else ""
+                                
+                                email_subject = f"Appointment Confirmed: {summary}"
+                                email_body = (
+                                    f"Hi {customer_name or 'there'},\n\n"
+                                    f"Your appointment has been successfully scheduled!\n\n"
+                                    f"Date & Time: {start_time}\n"
+                                    f"Description: {description}\n"
+                                    f"{meet_text}\n"
+                                    f"Thank you!"
+                                )
+                                await asyncio.to_thread(
+                                    google_service.send_email_via_gmail,
+                                    to_email=customer_email,
+                                    subject=email_subject,
+                                    body_text=email_body
+                                )
                         except Exception as e:
                             tool_result = {"status": "error", "message": str(e)}
                             print(f"[TOOL] Calendar booking error: {e}")
