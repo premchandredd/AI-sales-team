@@ -103,7 +103,7 @@ export default function AuthCallback() {
           </>
         ) : (
           <>
-            <Loader2 className="pulse-active" size={40} style={{ color: 'var(--accent)', margin: '0 auto 1.25rem' }} />
+            <Loader2 className="spin-active" size={40} style={{ color: 'var(--accent)', margin: '0 auto 1.25rem' }} />
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem' }}>Completing Sign In</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Please wait while we establish your secure session...

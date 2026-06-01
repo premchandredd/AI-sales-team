@@ -265,7 +265,7 @@ export default function Login() {
 
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', padding: '0.75rem 1rem', marginTop: '0.5rem' }}>
             {loading ? (
-              <Loader2 size={16} className="pulse-active" />
+              <Loader2 size={16} className="spin-active" />
             ) : (
               isSignUp ? 'Sign Up' : 'Sign In'
             )}

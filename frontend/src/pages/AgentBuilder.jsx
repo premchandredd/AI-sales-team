@@ -393,7 +393,7 @@ export default function AgentBuilder() {
 
           {creating && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent)', padding: '1rem' }}>
-              <Loader2 size={18} className="pulse-active" /> Building your agent...
+              <Loader2 size={18} className="spin-active" /> Building your agent...
             </div>
           )}
 

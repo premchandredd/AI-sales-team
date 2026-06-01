@@ -50,7 +50,7 @@ export default function Dashboard() {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-          <Loader2 className="pulse-active" size={32} style={{ color: 'var(--accent)' }} />
+          <Loader2 className="spin-active" size={32} style={{ color: 'var(--accent)' }} />
         </div>
       ) : agents.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>

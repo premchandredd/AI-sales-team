@@ -71,7 +71,7 @@ export default function Callback() {
       }}>
         {status === 'authenticating' && (
           <>
-            <Loader2 className="pulse-active" size={48} style={{ color: 'var(--accent)', margin: '0 auto 1.5rem' }} />
+            <Loader2 className="spin-active" size={48} style={{ color: 'var(--accent)', margin: '0 auto 1.5rem' }} />
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.75rem', fontWeight: 600 }}>Connecting Google Account</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
               Please wait while we complete the secure handshake with Google...

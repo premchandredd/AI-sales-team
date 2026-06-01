@@ -138,6 +138,7 @@ export default function VoiceTest() {
   const [kbFiles, setKbFiles] = useState([]);
   const [loadingKb, setLoadingKb] = useState(false);
   const [uploadingKb, setUploadingKb] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [fileToUpload, setFileToUpload] = useState(null);
 
   // Editable Script State
@@ -309,7 +310,7 @@ export default function VoiceTest() {
     }
   };
 
-  const handleUploadKBFile = async (e) => {
+  const handleUploadKBFile = (e) => {
     e.preventDefault();
     if (!fileToUpload) {
       alert('Please select a file to upload first.');
@@ -317,36 +318,58 @@ export default function VoiceTest() {
     }
     
     setUploadingKb(true);
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append('agent_id', id);
     formData.append('file', fileToUpload);
 
-    try {
-      const token = localStorage.getItem('supabase_token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('http://localhost:8000/api/knowledge-base/upload', {
-        method: 'POST',
-        headers,
-        body: formData
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert('File uploaded and indexed successfully!');
-        setFileToUpload(null);
-        const fileInput = document.getElementById('kb-file-input');
-        if (fileInput) fileInput.value = '';
-        fetchKnowledgeBase();
-      } else {
-        alert('Upload failed: ' + (data.detail || 'Unknown error'));
+    const xhr = new XMLHttpRequest();
+    
+    // Track upload progress
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
       }
-    } catch (err) {
-      console.error('Error uploading KB file:', err);
-      alert('Error uploading file');
-    } finally {
+    });
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data.success) {
+            alert('File uploaded and indexed successfully!');
+            setFileToUpload(null);
+            const fileInput = document.getElementById('kb-file-input');
+            if (fileInput) fileInput.value = '';
+            fetchKnowledgeBase();
+          } else {
+            alert('Upload failed: ' + (data.detail || 'Unknown error'));
+          }
+        } catch (e) {
+          alert('Upload failed: Invalid response from server');
+        }
+      } else {
+        alert('Upload failed: Server error ' + xhr.status);
+      }
       setUploadingKb(false);
+      setUploadProgress(0);
+    };
+
+    xhr.onerror = () => {
+      alert('Error uploading file');
+      setUploadingKb(false);
+      setUploadProgress(0);
+    };
+
+    xhr.open('POST', 'http://localhost:8000/api/knowledge-base/upload');
+    
+    const token = localStorage.getItem('supabase_token');
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     }
+    
+    xhr.send(formData);
   };
 
   const handleDeleteKBFile = async (fileId) => {
@@ -917,7 +940,7 @@ export default function VoiceTest() {
   if (loading) {
     return (
       <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Loader2 className="pulse-active" size={32} style={{ color: 'var(--accent)' }} />
+        <Loader2 className="spin-active" size={32} style={{ color: 'var(--accent)' }} />
       </div>
     );
   }
@@ -1043,7 +1066,7 @@ export default function VoiceTest() {
                           Target Calendar
                         </label>
                         {loadingCalendars ? (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><Loader2 size={12} className="pulse-active inline" /> Loading calendars...</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><Loader2 size={12} className="spin-active inline" /> Loading calendars...</div>
                         ) : (
                           <select
                             className="input"
@@ -1177,7 +1200,7 @@ export default function VoiceTest() {
                           Select Spreadsheet
                         </label>
                         {loadingSheets ? (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><Loader2 size={12} className="pulse-active inline" /> Loading sheets...</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><Loader2 size={12} className="spin-active inline" /> Loading sheets...</div>
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '480px' }}>
                             <select
@@ -1203,7 +1226,7 @@ export default function VoiceTest() {
                                     onClick={handleProposeColumns}
                                     disabled={loadingColumns}
                                   >
-                                    {loadingColumns ? <Loader2 size={14} className="pulse-active" /> : <Plus size={14} />}
+                                    {loadingColumns ? <Loader2 size={14} className="spin-active" /> : <Plus size={14} />}
                                     {loadingColumns ? 'Generating Columns...' : '+ Create New Sheet'}
                                   </button>
                                 ) : (
@@ -1273,7 +1296,7 @@ export default function VoiceTest() {
                                         disabled={creatingTemplate || proposedColumns.length === 0}
                                         style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                                       >
-                                        {creatingTemplate ? <Loader2 size={14} className="pulse-active" /> : <FileSpreadsheet size={14} />}
+                                        {creatingTemplate ? <Loader2 size={14} className="spin-active" /> : <FileSpreadsheet size={14} />}
                                         Create Sheet with These Columns
                                       </button>
                                       <button
@@ -1298,7 +1321,7 @@ export default function VoiceTest() {
                             Select Sheet Tab (Table Name)
                           </label>
                           {loadingTabs ? (
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><Loader2 size={12} className="pulse-active" /> Loading tabs...</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><Loader2 size={12} className="spin-active" /> Loading tabs...</div>
                           ) : (
                             <select
                               className="input"
@@ -1395,7 +1418,7 @@ export default function VoiceTest() {
                                 disabled={updatingColumns || activeColumns.length === 0}
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                               >
-                                {updatingColumns ? <Loader2 size={14} className="pulse-active" /> : <Save size={14} />}
+                                {updatingColumns ? <Loader2 size={14} className="spin-active" /> : <Save size={14} />}
                                 Update Sheet Columns
                               </button>
                             </div>
@@ -1439,7 +1462,7 @@ export default function VoiceTest() {
                     disabled={savingConfig}
                   >
                     {savingConfig ? (
-                      <Loader2 size={14} className="pulse-active" />
+                      <Loader2 size={14} className="spin-active" />
                     ) : (
                       <Save size={14} />
                     )}
@@ -1605,7 +1628,7 @@ export default function VoiceTest() {
                     onClick={handleSaveConfig}
                     disabled={savingConfig}
                   >
-                    {savingConfig ? <Loader2 size={12} className="pulse-active" /> : <Save size={12} />}
+                    {savingConfig ? <Loader2 size={12} className="spin-active" /> : <Save size={12} />}
                     Save WhatsApp Settings
                   </button>
                 </div>
@@ -1679,7 +1702,7 @@ export default function VoiceTest() {
                     onClick={handleSaveConfig}
                     disabled={savingConfig}
                   >
-                    {savingConfig ? <Loader2 size={12} className="pulse-active" /> : <Save size={12} />}
+                    {savingConfig ? <Loader2 size={12} className="spin-active" /> : <Save size={12} />}
                     Save Escalation Settings
                   </button>
                 </div>
@@ -1754,7 +1777,7 @@ export default function VoiceTest() {
                   disabled={savingTwilio}
                   style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                 >
-                  {savingTwilio ? <Loader2 size={12} className="pulse-active" /> : <Save size={12} />}
+                  {savingTwilio ? <Loader2 size={12} className="spin-active" /> : <Save size={12} />}
                   Save Twilio Settings
                 </button>
               </div>
@@ -1856,7 +1879,7 @@ export default function VoiceTest() {
                     onClick={handleSaveVoiceSettings}
                     disabled={savingVoiceSettings}
                   >
-                    {savingVoiceSettings ? <Loader2 size={12} className="pulse-active" /> : <Save size={12} />}
+                    {savingVoiceSettings ? <Loader2 size={12} className="spin-active" /> : <Save size={12} />}
                     Save Voice Settings
                   </button>
                 </div>
@@ -1900,14 +1923,14 @@ export default function VoiceTest() {
                     disabled={loadingLeads}
                     style={{ padding: '0.35rem', borderRadius: '50%' }}
                   >
-                    <RefreshCw size={14} className={loadingLeads ? 'pulse-active' : ''} />
+                    <RefreshCw size={14} className={loadingLeads ? 'spin-active' : ''} />
                   </button>
                 </div>
               </div>
 
               {loadingLeads ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                  <Loader2 size={24} className="pulse-active" style={{ color: 'var(--accent)' }} />
+                  <Loader2 size={24} className="spin-active" style={{ color: 'var(--accent)' }} />
                 </div>
               ) : leads.length === 0 ? (
                 <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
@@ -2066,7 +2089,7 @@ export default function VoiceTest() {
                     onClick={handleSaveFirstMessage}
                     disabled={savingFirstMessage}
                   >
-                    {savingFirstMessage ? <Loader2 size={12} className="pulse-active" /> : <Save size={12} />}
+                    {savingFirstMessage ? <Loader2 size={12} className="spin-active" /> : <Save size={12} />}
                     Save First Message
                   </button>
                 </div>
@@ -2106,7 +2129,7 @@ export default function VoiceTest() {
                     onClick={handleSaveSystemPrompt}
                     disabled={savingSystemPrompt}
                   >
-                    {savingSystemPrompt ? <Loader2 size={12} className="pulse-active" /> : <Save size={12} />}
+                    {savingSystemPrompt ? <Loader2 size={12} className="spin-active" /> : <Save size={12} />}
                     Save System Instructions
                   </button>
                 </div>
@@ -2242,7 +2265,7 @@ export default function VoiceTest() {
                   {/* ── Outbound Campaign List ── */}
                   {loadingCampaigns ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                      <Loader2 size={24} className="pulse-active" style={{ color: '#f59e0b' }} />
+                      <Loader2 size={24} className="spin-active" style={{ color: '#f59e0b' }} />
                     </div>
                   ) : campaigns.length === 0 ? (
                     <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -2351,7 +2374,7 @@ export default function VoiceTest() {
 
                     {loadingCampLeads ? (
                       <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                        <Loader2 size={24} className="pulse-active" style={{ color: '#f59e0b' }} />
+                        <Loader2 size={24} className="spin-active" style={{ color: '#f59e0b' }} />
                       </div>
                     ) : campLeads.length === 0 ? (
                       <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -2480,7 +2503,7 @@ export default function VoiceTest() {
                   {/* ── Inbound Availability Cards ── */}
                   {loadingCampaigns ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                      <Loader2 size={24} className="pulse-active" style={{ color: '#06b6d4' }} />
+                      <Loader2 size={24} className="spin-active" style={{ color: '#06b6d4' }} />
                     </div>
                   ) : campaigns.length === 0 ? (
                     <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -2582,7 +2605,10 @@ export default function VoiceTest() {
                 </div>
                 <button type="submit" className="btn btn-primary btn-sm" style={{ alignSelf: 'center', padding: '0.5rem 2rem' }} disabled={uploadingKb || !fileToUpload}>
                   {uploadingKb ? (
-                    <><Loader2 size={14} className="pulse-active inline" /> Parsing & Indexing...</>
+                    <>
+                      <Loader2 size={14} className="spin-active inline" style={{ marginRight: '0.5rem' }} /> 
+                      {uploadProgress < 100 ? `Uploading (${uploadProgress}%)...` : 'Parsing & Indexing...'}
+                    </>
                   ) : (
                     'Upload & Index Document'
                   )}
@@ -2593,7 +2619,7 @@ export default function VoiceTest() {
               <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', fontWeight: 600 }}>Active Documents</h4>
               {loadingKb ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                  <Loader2 size={24} className="pulse-active" style={{ color: 'var(--accent)' }} />
+                  <Loader2 size={24} className="spin-active" style={{ color: 'var(--accent)' }} />
                 </div>
               ) : kbFiles.length === 0 ? (
                 <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -2623,7 +2649,7 @@ export default function VoiceTest() {
           <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {loadingAnalytics ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-                <Loader2 size={36} className="pulse-active" style={{ color: 'var(--accent)' }} />
+                <Loader2 size={36} className="spin-active" style={{ color: 'var(--accent)' }} />
               </div>
             ) : !analytics || analytics.total_calls === 0 ? (
               <div style={{ padding: '3rem 1rem', textAlign: 'center', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
